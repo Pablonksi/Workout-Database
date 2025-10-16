@@ -1,0 +1,80 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workout Database</title>
+<style>
+  body {font-family: Arial, sans-serif; margin: 20px; background-color: #f8f9fa;}
+  h1 {text-align: center; color: #333;}
+  table {width: 100%; border-collapse: collapse; margin-top: 20px;}
+  th, td {border: 1px solid #ddd; padding: 8px; text-align: left;}
+  th {background-color: #007bff; color: white;}
+  tr:nth-child(even) {background-color: #f2f2f2;}
+  input, select {padding: 5px; margin: 5px;}
+</style>
+</head>
+<body>
+<h1>Workout Exercise Database</h1>
+<p>Filter by Equipment or Body Part:</p>
+<select id="equipmentFilter">
+  <option value="">All Equipment</option>
+</select>
+<select id="bodyFilter">
+  <option value="">All Body Parts</option>
+</select>
+<input type="text" id="searchBox" placeholder="Search exercise...">
+<table id="workoutTable">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Description</th>
+      <th>Equipment</th>
+      <th>Body Part</th>
+      <th>Video</th>
+    </tr>
+  </thead>
+  <tbody id="tableBody"></tbody>
+</table>
+<script>
+async function loadCSV() {
+  const response = await fetch('workout_database.csv');
+  const text = await response.text();
+  const rows = text.split('\n').slice(1);
+  const tableBody = document.getElementById('tableBody');
+  const equipmentSet = new Set();
+  const bodySet = new Set();
+  rows.forEach(line => {
+    const [name, equip, body, desc, video] = line.split(',');
+    if (!name) return;
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${name}</td><td>${desc}</td><td>${equip}</td><td>${body}</td><td><a href='${video}' target='_blank'>Watch</a></td>`;
+    tableBody.appendChild(row);
+    equipmentSet.add(equip); bodySet.add(body);
+  });
+  const eqSelect = document.getElementById('equipmentFilter');
+  const bdSelect = document.getElementById('bodyFilter');
+  equipmentSet.forEach(e => {const opt = document.createElement('option'); opt.value=e; opt.text=e; eqSelect.appendChild(opt);});
+  bodySet.forEach(b => {const opt = document.createElement('option'); opt.value=b; opt.text=b; bdSelect.appendChild(opt);});
+}
+loadCSV();
+document.getElementById('searchBox').addEventListener('input', filterTable);
+document.getElementById('equipmentFilter').addEventListener('change', filterTable);
+document.getElementById('bodyFilter').addEventListener('change', filterTable);
+
+function filterTable(){
+  const search = document.getElementById('searchBox').value.toLowerCase();
+  const equip = document.getElementById('equipmentFilter').value;
+  const body = document.getElementById('bodyFilter').value;
+  document.querySelectorAll('#workoutTable tbody tr').forEach(row => {
+    const cells = row.children;
+    const matchesSearch = cells[0].innerText.toLowerCase().includes(search);
+    const matchesEquip = !equip || cells[2].innerText === equip;
+    const matchesBody = !body || cells[3].innerText === body;
+    row.style.display = (matchesSearch && matchesEquip && matchesBody) ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>
